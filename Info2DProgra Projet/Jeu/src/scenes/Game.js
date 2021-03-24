@@ -23,6 +23,7 @@ export default class Game extends Phaser.Scene
 		super('game')
 	}
 
+	
 
 	preload()
 	{
@@ -33,7 +34,6 @@ export default class Game extends Phaser.Scene
 		this.load.image('ground', 'assets/ground.png')
 		//this.load.image('ice_platform', 'assets/iceplatform.png')
 		this.load.spritesheet('hero', 'assets/hero.png', {frameWidth: 60, frameHeight: 76})
-		this.load.image('hero-jump', 'assets/hero_jump.png')
 		this.load.image('powerup', 'assets/powerup.png')
 		//this.load.image('ennemy', 'assets/ennemy.png')
 
@@ -76,22 +76,35 @@ export default class Game extends Phaser.Scene
 
 		this.anims.create({
 			key: 'normal',
-			frames: [ { key: 'hero', frame: 7 } ],
+			frames: [ { key: 'hero', frame: 9 } ],
 			frameRate: 10
 		});
 		
-
 		this.anims.create({
-			key:'left',
-			frames: this.anims.generateFrameNumbers('hero', {start: 0, end : 6}),
-			frameRate: 5,
+			key:'leftjump',
+			frames: this.anims.generateFrameNumbers('hero', {start: 0, end : 1}),
+			frameRate: 1,
 			repeat: -1
 		})
 
 		this.anims.create({
-			key:'right',
-			frames: this.anims.generateFrameNumbers('hero', {start: 7, end : 13}),
+			key:'left',
+			frames: this.anims.generateFrameNumbers('hero', {start: 2, end : 8}),
 			frameRate: 5,
+			repeat: -1
+		})
+		
+
+		this.anims.create({
+			key:'right',
+			frames: this.anims.generateFrameNumbers('hero', {start: 9, end : 15}),
+			frameRate: 5,
+			repeat: 1
+		})
+		this.anims.create({
+			key:'rightjump',
+			frames: this.anims.generateFrameNumbers('hero', {start: 16, end : 17}),
+			frameRate: 1,
 			repeat: 1
 		})
 
@@ -122,10 +135,12 @@ export default class Game extends Phaser.Scene
 		//this.physics.add.collider(this.platforms, this.ennemy)
 		//this.physics.add.collider(this.ennemy, this.player, hitEnnemy, undefined, this)
 
-		//this.input.gamepad.once('connected', function (pad) {
-			//paddleConnected = true;
-			//paddle = pad;
-			//});
+		this.paddleConnected=false;
+
+		this.input.gamepad.once('connected', function (pad) {
+			this.paddleConnected = true;
+			paddle = pad;
+			});
 	}
 
 	update(t, dt)
@@ -149,60 +164,75 @@ export default class Game extends Phaser.Scene
 
 		const touchingDown = this.player.body.touching.down
 
-		//if (paddleConnected == true)
-    	//{
-        	//if (paddle.A && player.body.touching.down)
-        	//{
-        	//player.setVelocityY(-330);
-        	//}
+		if (this.paddleConnected == true)
+    	{
+        	if (paddle.A && touchingDown)
+        	{
+        		this.player.setVelocityY(-290);
+				this.player.anims.play('rightjump', true);
+        	}
 
-        	//else if (paddle.R2 && player.body.touching.down)
-        	//{
-            	//player.setVelocityX(160);
-            	//player.anims.play('right', true);
-        	//}
+        	else if (paddle.R2 && touchingDown)
+        	{
+            	this.player.setVelocityX(160);
+            	this.player.anims.play('right', true);
+        	}
 
-        	//else if (paddle.R2 && !player.body.touching.down)
-        	//{
-            	//player.setVelocityX(160);
-            	//player.anims.play('rightjump', true);
-        	//}
+        	else if (paddle.R2 && !touchingDown)
+        	{
+            	this.player.setVelocityX(160);
+            	this.player.anims.play('rightjump', true);
+        	}
 
-        	//else if (paddle.L2 && player.body.touching.down)
-        	//{
-            	//player.setVelocityX(-160);
-            	//player.anims.play('left', true);
-        	//}
+        	else if (paddle.L2 && touchingDown)
+        	{
+            	this.player.setVelocityX(-160);
+            	this.player.anims.play('left', true);
+        	}
 
-        	//else if (paddle.L2 && !player.body.touching.down)
-        	//{
-            	//player.setVelocityX(-160);
-            	//player.anims.play('leftjump', true);
-        	//}
-		//}
+        	else if (paddle.L2 && !touchingDown)
+        	{
+            	this.player.setVelocityX(-160);
+            	this.player.anims.play('leftjump', true);
+        	}
+		}
 
-		if (this.cursors.up.isDown && touchingDown)
+		else if (this.cursors.up.isDown && touchingDown)
 		{
 			this.player.setVelocityY(-290)
-
+			this.player.anims.play('rightjump', true);
 		}
 		
 
-		else if (this.cursors.left.isDown )
+		else if (this.cursors.left.isDown && touchingDown)
 		{
 			this.player.anims.play('left', true)
 			this.player.setVelocityX(-200)
 		}
-		else if (this.cursors.right.isDown )
+		else if (this.cursors.left.isDown && !touchingDown)
+		{
+			this.player.anims.play('leftjump', true)
+			this.player.setVelocityX(-200)
+		}
+
+		else if (this.cursors.right.isDown && touchingDown)
 		{
 			this.player.anims.play('right', true)
-			this.player.setVelocityX(200)
-			
+			this.player.setVelocityX(200)	
 		}
+		else if (this.cursors.right.isDown && !touchingDown)
+		{
+			this.player.anims.play('rightjump', true)
+			this.player.setVelocityX(200)	
+		}
+
 		else
 		{
 			this.player.setVelocityX(0)
-			this.player.anims.play('normal')
+			if (touchingDown){
+				this.player.anims.play('normal')
+			}
+			
 		}
 
 
@@ -276,7 +306,7 @@ export default class Game extends Phaser.Scene
 
 	walljump(){
 		const touchingRight = this.player.body.touching.right
-		this.player.anims.play('walljumpD')
+		//this.player.anims.play('walljumpD')
 		if (this.cursors.up.isDown && touchingRight){
 			this.player.setVelocityX(-800)
 			this.player.setVelocityY(-200)
@@ -284,7 +314,7 @@ export default class Game extends Phaser.Scene
 	}
 	walljump2(){
 		const touchingLeft = this.player.body.touching.left
-		this.player.anims.play('walljumpG')
+		//this.player.anims.play('walljumpG')
 		if (this.cursors.up.isDown && touchingLeft){
 			this.player.setVelocityX(800)
 			this.player.setVelocityY(-200)

@@ -16,5 +16,6 @@ export default new Phaser.Game({
 			},
 			debug: true
 		}
-	}
+	},
+	input:{gamepad:true},
 })
