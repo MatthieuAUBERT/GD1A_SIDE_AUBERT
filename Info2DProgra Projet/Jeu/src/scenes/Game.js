@@ -1,7 +1,7 @@
 import Phaser from '../lib/phaser.js'
 
 import PowerUp from '../game/PowerUp.js'
-//import Ennemy from '../game/Ennemy.js'
+import Ennemy from '../game/Ennemy.js'
 
 export default class Game extends Phaser.Scene
 {
@@ -16,6 +16,9 @@ export default class Game extends Phaser.Scene
 
 	/** @type {Phaser.Physics.Arcade.Group} */
 	powerups
+
+	/** @type {Phaser.Physics.Arcade.Group} */
+	ennemies
 
 
 	constructor()
@@ -35,7 +38,7 @@ export default class Game extends Phaser.Scene
 		//this.load.image('ice_platform', 'assets/iceplatform.png')
 		this.load.spritesheet('hero', 'assets/hero.png', {frameWidth: 60, frameHeight: 76})
 		this.load.image('powerup', 'assets/powerup.png')
-		//this.load.image('ennemy', 'assets/ennemy.png')
+		this.load.image('ennemy', 'assets/Ennemi.png')
 
 
 		this.cursors = this.input.keyboard.createCursorKeys()
@@ -73,6 +76,7 @@ export default class Game extends Phaser.Scene
 		}
 
 		this.player = this.physics.add.sprite(250, 750, 'hero')
+		this.life = 3
 
 		this.anims.create({
 			key: 'normal',
@@ -140,12 +144,14 @@ export default class Game extends Phaser.Scene
 		this.physics.add.collider(this.platforms, this.powerups)
 		this.physics.add.overlap(this.player, this.powerups, this.PoweringUp, undefined, this)
 
-		//this.ennemy = this.physics.add.group({
-			//classType: Ennemy
-		//})
+		this.ennemies = this.physics.add.group({
+			classType: Ennemy
+		})
 
-		//this.physics.add.collider(this.platforms, this.ennemy)
-		//this.physics.add.collider(this.ennemy, this.player, hitEnnemy, undefined, this)
+		this.physics.add.collider(this.platforms, this.ennemies)
+		this.physics.add.collider(this.wall, this.ennemies)
+		this.physics.add.collider(this.wall2, this.ennemies)
+		this.physics.add.collider(this.ennemies, this.player, this.hitEnnemy, undefined, this)
 
 		this.paddleConnected=false;
 
@@ -171,6 +177,7 @@ export default class Game extends Phaser.Scene
 				platform.y = scrollY - Phaser.Math.Between(50,100)
 				platform.body.updateFromGameObject()
 				//this.addPowerUp(platform)
+				this.addEnnemies(platform)
 			}
 		})
 
@@ -278,6 +285,24 @@ export default class Game extends Phaser.Scene
 		return powerup
 	}
 
+	addEnnemies(sprite){
+		const y = sprite.y - sprite.displayHeight
+
+		/** @type {Phaser.Physics.Arcade.Sprite} */
+		const ennemy = this.ennemies.get(sprite.x, y, 'ennemy')
+
+		ennemy.setActive(true)
+		ennemy.setVisible(true)
+
+		this.add.existing(ennemy)
+
+		ennemy.body.setSize(ennemy.width, ennemy.height)
+
+		this.physics.world.enable(ennemy)
+
+		return ennemy
+	}
+
 	/**
 	 * 
 	 * @param {Phaser.Physics.Arcade.Sprite} player 
@@ -312,9 +337,13 @@ export default class Game extends Phaser.Scene
 		return bottomPlatform
 	}
 
-	//hitEnnemy(){
-
-	//}
+	hitEnnemy()
+	{
+		this.life -= 1
+		if (this.life = 0){
+			this.scene.start('game-over')
+		}
+	}
 
 	walljump(){
 		const touchingRight = this.player.body.touching.right
