@@ -108,6 +108,18 @@ export default class Game extends Phaser.Scene
 			repeat: 1
 		})
 
+		this.anims.create({
+			key: 'walljumpG',
+			frames: [ { key: 'hero', frame: 18 } ],
+			frameRate: 10
+		});
+
+		this.anims.create({
+			key: 'walljumpD',
+			frames: [ { key: 'hero', frame: 19 } ],
+			frameRate: 10
+		});
+
 		this.physics.add.collider(this.ground, this.player)
 		this.physics.add.collider(this.platforms, this.player)
 		this.physics.add.collider(this.wall, this.player,this.walljump,undefined,this)
@@ -306,18 +318,18 @@ export default class Game extends Phaser.Scene
 
 	walljump(){
 		const touchingRight = this.player.body.touching.right
-		//this.player.anims.play('walljumpD')
-		if (this.cursors.up.isDown && touchingRight){
+		this.player.anims.play('walljumpD')
+		if (this.cursors.left.isDown && touchingRight){
 			this.player.setVelocityX(-800)
-			this.player.setVelocityY(-200)
+			this.player.setVelocityY(-250)
 		}
 	}
 	walljump2(){
 		const touchingLeft = this.player.body.touching.left
-		//this.player.anims.play('walljumpG')
-		if (this.cursors.up.isDown && touchingLeft){
+		this.player.anims.play('walljumpG')
+		if (this.cursors.right.isDown && touchingLeft){
 			this.player.setVelocityX(800)
-			this.player.setVelocityY(-200)
+			this.player.setVelocityY(-250)
 		}
 	}
 }
