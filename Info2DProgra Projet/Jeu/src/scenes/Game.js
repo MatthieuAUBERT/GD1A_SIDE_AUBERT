@@ -39,6 +39,9 @@ export default class Game extends Phaser.Scene
 		this.load.spritesheet('hero', 'assets/hero.png', {frameWidth: 60, frameHeight: 76})
 		this.load.image('powerup', 'assets/powerup.png')
 		this.load.image('ennemy', 'assets/Ennemi.png')
+		this.load.image('coeur1', 'assets/coeur.png')
+		this.load.image('coeur2', 'assets/coeur.png')
+		this.load.image('coeur3', 'assets/coeur.png')
 
 
 		this.cursors = this.input.keyboard.createCursorKeys()
@@ -48,7 +51,7 @@ export default class Game extends Phaser.Scene
 
 	create()
 	{
-		this.add.image(240, 320, 'background')
+		this.add.image(250, 285, 'background')
 			.setScrollFactor(1, 0)
 
 		this.ground = this.physics.add.staticGroup()
@@ -57,9 +60,14 @@ export default class Game extends Phaser.Scene
 		this.wall2 = this.physics.add.staticGroup()
 
 
+		
+		this.wall.create(740,576,'wall')
+		this.wall2.create(-240,576,'wall2')
 		this.ground.create(250, 950, 'ground')
-		this.wall.create(710,576,'wall')
-		this.wall2.create(-210,576,'wall2')
+
+		this.coeur1 = this.add.image(-230,70,'coeur1').setScrollFactor(1,0)
+		this.coeur2 = this.add.image(-170,70,'coeur2').setScrollFactor(1,0)
+		this.coeur3 = this.add.image(-110,70,'coeur3').setScrollFactor(1,0)
 
 		// Création de 5 plateformes par mouvement de caméra
 		for (let i = 0; i < 8; ++i)
@@ -140,6 +148,8 @@ export default class Game extends Phaser.Scene
 		this.powerups = this.physics.add.group({
 			classType: PowerUp
 		})
+
+		this.DoubleJump = false
 		
 		this.physics.add.collider(this.platforms, this.powerups)
 		this.physics.add.overlap(this.player, this.powerups, this.PoweringUp, undefined, this)
@@ -148,7 +158,6 @@ export default class Game extends Phaser.Scene
 			classType: Ennemy
 		})
 
-		this.physics.add.collider(this.platforms, this.ennemies)
 		this.physics.add.collider(this.wall, this.ennemies)
 		this.physics.add.collider(this.wall2, this.ennemies)
 		this.physics.add.collider(this.ennemies, this.player, this.hitEnnemy, undefined, this)
@@ -172,11 +181,13 @@ export default class Game extends Phaser.Scene
 			/** @type {Phaser.Physics.Arcade.Sprite} */
 			const platform = child
 			const scrollY = this.cameras.main.scrollY
+			if (platform.y >= scrollY + 700){
+			this.addPowerUp(this.player)	
+			}
 			if (platform.y >= scrollY + 700)
 			{
 				platform.y = scrollY - Phaser.Math.Between(50,100)
 				platform.body.updateFromGameObject()
-				//this.addPowerUp(platform)
 				this.addEnnemies(platform)
 			}
 		})
@@ -190,6 +201,12 @@ export default class Game extends Phaser.Scene
         		this.player.setVelocityY(-290);
 				this.player.anims.play('rightjump', true);
         	}
+			else if (paddle.A && !touchingDown && this.DoubleJump)
+			{
+				this.player.setVelocityY(-190)
+				this.player.anims.play('rightjump', true)
+				this.DoubleJump = false
+			}
 
         	else if (paddle.R2 && touchingDown)
         	{
@@ -221,7 +238,13 @@ export default class Game extends Phaser.Scene
 			this.player.setVelocityY(-290)
 			this.player.anims.play('rightjump', true);
 		}
-		
+
+		else if (this.cursors.up.isDown && !touchingDown && this.DoubleJump)
+		{
+			this.player.setVelocityY(-250)
+			this.player.anims.play('rightjump', true)
+			this.DoubleJump = false
+		}
 
 		else if (this.cursors.left.isDown && touchingDown)
 		{
@@ -268,7 +291,8 @@ export default class Game extends Phaser.Scene
 	 */
 	addPowerUp(sprite)
 	{
-		const y = sprite.y - sprite.displayHeight
+
+		const y = sprite.y - 300
 
 		/** @type {Phaser.Physics.Arcade.Sprite} */
 		const powerup = this.powerups.get(sprite.x, y, 'powerup')
@@ -310,10 +334,11 @@ export default class Game extends Phaser.Scene
 	 */
 	PoweringUp(player, powerup)
 	{
-		this.powerup.killAndHide(powerup)
+		this.powerups.killAndHide(powerup)
 
 		this.physics.world.disableBody(powerup.body)
 
+		this.DoubleJump = true
 	}
 
 	findBottomMostPlatform()
@@ -336,11 +361,23 @@ export default class Game extends Phaser.Scene
 
 		return bottomPlatform
 	}
-
-	hitEnnemy()
+	/**
+	 * 
+	 * @param {Phaser.Physics.Arcade.Sprite} player 
+	 * @param {Ennemy} ennemy 
+	 */
+	hitEnnemy(player, ennemy)
 	{
+		this.ennemies.killAndHide(ennemy)
+		this.physics.world.disableBody(ennemy.body)
 		this.life -= 1
-		if (this.life = 0){
+		if (this.life == 2){
+			this.coeur3.destroy()
+		}
+		if (this.life == 1){
+			this.coeur2.destroy()
+		}
+		if (this.life == 0){
 			this.scene.start('game-over')
 		}
 	}
